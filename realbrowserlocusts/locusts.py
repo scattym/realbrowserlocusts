@@ -18,6 +18,7 @@ class RealBrowserLocust(Locust):
     timeout = 30
     screen_width = None
     screen_height = None
+    user_agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36'
 
     def __init__(self):
         super(RealBrowserLocust, self).__init__()
@@ -40,8 +41,23 @@ class ChromeLocust(RealBrowserLocust):
         if self.proxy_server:
             _LOGGER.info('Using proxy: ' + self.proxy_server)
             options.add_argument('proxy-server={}'.format(self.proxy_server))
+
+        if self.user_agent is not None:
+            options.add_argument('user-agent={}'.format(self.user_agent))
+
+        host = 'http://127.0.0.1:4444/wd/hub'
         self.client = RealBrowserClient(
-            webdriver.Chrome(chrome_options=options),
+            webdriver.Remote(
+                command_executor=host,
+                desired_capabilities={
+                    'browserName': 'chrome',
+                    'javascriptEnabled': True,
+                    'acceptSslCerts': True,
+                    'acceptInsecureCerts': True,
+                    'loggingPrefs': {'performance': 'INFO'},
+                },
+                options=options,
+            ),
             self.timeout,
             self.screen_width,
             self.screen_height
